@@ -12,7 +12,7 @@
 function FindProxyForURL(url, host) {
 
     var PROXY   = "PROXY 46.185.131.218:20002";
-    var DIRECT  = "DIRECT";
+    var DIRECT  = "PROXY 46.185.131.218:20001";
 
     // --------------------------------------------------------
     // Resolve hostname to IP for subnet matching
