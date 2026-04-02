@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════
-//  PROXY PAC — Jordan-Anchored Routing  v3
-//  الإصلاح: اللوبي → DIRECT  |  المباراة فقط → PROXY
+//  PROXY PAC — Jordan-Anchored Routing  v4
+//  الإصلاح: dnsResolve تُستدعى فقط في مرحلة match
 // ════════════════════════════════════════════════════════════════
 
 var PROXY  = "PROXY 46.185.131.218:20001";
@@ -84,7 +84,7 @@ var BLOCKED_V6_32 = [
 ];
 
 // ════════════════════════════════════════════════════════════════
-//  ❹  UTILITY — دوال المطابقة
+//  ❹  UTILITY
 // ════════════════════════════════════════════════════════════════
 
 function ipv4ToInt(ip) {
@@ -169,6 +169,7 @@ function isBlocked6(f) {
 
 // ════════════════════════════════════════════════════════════════
 //  ❻  TRAFFIC CLASSIFICATION
+//  ◄ تُستدعى أولاً — قبل أي عملية شبكية
 // ════════════════════════════════════════════════════════════════
 
 function classifyTraffic(host, url) {
@@ -242,8 +243,7 @@ function autoReset() {
 function checkAndReset(now) {
   if (SESSION.lastActivity > 0 &&
       (now - SESSION.lastActivity) > SESSION_TIMEOUT_MS) {
-    autoReset();
-    return;
+    autoReset(); return;
   }
   if (SESSION.inMatch && SESSION.lastMatchMs > 0 &&
       (now - SESSION.lastMatchMs) > MATCH_END_TIMEOUT) {
@@ -260,76 +260,77 @@ function handleMatchHunting() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  ❾  ROUTING DECISION
-//  ┌─────────────────┬──────────────────────────────────────────┐
-//  │ phase           │ قرار التوجيه                             │
-//  ├─────────────────┼──────────────────────────────────────────┤
-//  │ match + أردني   │ PROXY  ← تحسين مسار اللعب               │
-//  │ match + غير أردني│ PROXY  ← Hunting (لا نحجب)              │
-//  │ lobby           │ DIRECT ← سرعة كاملة بدون وسيط           │
-//  │ general         │ DIRECT ← سرعة كاملة بدون وسيط           │
-//  └─────────────────┴──────────────────────────────────────────┘
-// ════════════════════════════════════════════════════════════════
-
-function routeByPhase(phase, isJordan) {
-  if (phase === "match") {
-    // أردني أو Hunting → كلاهما عبر Proxy
-    return isJordan ? PROXY : handleMatchHunting();
-  }
-  // lobby + general → مباشر دون وسيط
-  return DIRECT;
-}
-
-// ════════════════════════════════════════════════════════════════
-//  ❿  MAIN ENTRY POINT
+//  ❾  MAIN ENTRY POINT
+//
+//  ترتيب العمليات (من الأسرع للأبطأ):
+//
+//  1. isPlainHostName        ← فحص نصي فوري
+//  2. isPUBG / isCDN         ← regex في الذاكرة
+//  3. classifyTraffic        ← regex في الذاكرة
+//  4. DIRECT فوري للوبي/عام  ← ◄ يتجاوز dnsResolve كلياً
+//  5. dnsResolve             ← طلب شبكي — فقط لمرحلة match
+//  6. فحص النطاقات           ← عمليات حسابية
 // ════════════════════════════════════════════════════════════════
 
 function FindProxyForURL(url, host) {
 
+  // ── الخطوة 1: فلاتر فورية (لا تكلفة) ──
   if (isPlainHostName(host))       return DIRECT;
   if (!isPUBG(host, url))          return DIRECT;
   if (isCDNorTelemetry(host, url)) return DIRECT;
 
+  // ── الخطوة 2: تصنيف حركة المرور (قبل أي شيء آخر) ──
+  var phase = classifyTraffic(host, url);
+
+  // ── الخطوة 3: lobby / general → DIRECT فوري بدون dnsResolve ──
+  // ◄ هذا هو جوهر الإصلاح: اللوبي لا يحتاج فحص IP إطلاقاً
+  if (phase !== "match") {
+    var now0 = getTimestamp();
+    checkAndReset(now0);
+    SESSION.lastActivity = now0;
+    if (SESSION.inMatch) { autoReset(); SESSION.phase = phase; }
+    else { SESSION.phase = phase; }
+    return DIRECT;
+  }
+
+  // ── الخطوة 4: match فقط → dnsResolve + فحص النطاقات ──
   var ip = "";
   try { ip = dnsResolve(host); } catch(e) { ip = ""; }
   if (!ip) return BLOCK;
 
-  var now   = getTimestamp();
-  var phase = classifyTraffic(host, url);
-
+  var now = getTimestamp();
   checkAndReset(now);
   SESSION.lastActivity = now;
-
-  // اكتشاف انتهاء المباراة عند الانتقال من match إلى غيره
-  if (phase === "match") {
-    SESSION.lastMatchMs  = now;
-    SESSION.inMatch      = true;
-    SESSION.phase        = "match";
-    SESSION.matchHunting = false;
-  } else if (SESSION.inMatch && phase !== "match") {
-    autoReset();
-    SESSION.phase = phase;
-  } else {
-    SESSION.phase = phase;
-  }
+  SESSION.lastMatchMs  = now;
+  SESSION.inMatch      = true;
+  SESSION.phase        = "match";
+  SESSION.matchHunting = false;
 
   // ── مسار IPv6 ──
   if (ip.indexOf(":") !== -1) {
     var full = expandIPv6(ip);
     if (!full || isBlocked6(full)) return BLOCK;
     var rid6 = jordanIndex6(full);
-    if (rid6 !== -1 && SESSION.rangeId6 === -1) SESSION.rangeId6 = rid6;
-    if (rid6 !== -1) { SESSION.matchHunting = false; SESSION.huntingCount = 0; }
-    return routeByPhase(phase, rid6 !== -1);
+    if (rid6 !== -1) {
+      if (SESSION.rangeId6 === -1) SESSION.rangeId6 = rid6;
+      SESSION.matchHunting = false;
+      SESSION.huntingCount = 0;
+      return PROXY;
+    }
+    return handleMatchHunting();
   }
 
   // ── مسار IPv4 ──
   if (ip.indexOf(".") !== -1) {
     if (isBlocked4(ip)) return BLOCK;
     var rid4 = jordanIndex4(ip);
-    if (rid4 !== -1 && SESSION.rangeId4 === -1) SESSION.rangeId4 = rid4;
-    if (rid4 !== -1) { SESSION.matchHunting = false; SESSION.huntingCount = 0; }
-    return routeByPhase(phase, rid4 !== -1);
+    if (rid4 !== -1) {
+      if (SESSION.rangeId4 === -1) SESSION.rangeId4 = rid4;
+      SESSION.matchHunting = false;
+      SESSION.huntingCount = 0;
+      return PROXY;
+    }
+    return handleMatchHunting();
   }
 
   return BLOCK;
