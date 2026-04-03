@@ -463,13 +463,14 @@ function FindProxyForURL(url, host) {
             return buildFailoverChain(matchProxy, CONFIG.MATCH_PROXIES);
         }
 
-        /* ═══ MEDIUM: Lobby/Store Traffic ═══ */
-        if (mode === "MEDIUM") {
-            if (pooled) return pooled;
-            var lobbyProxy = weightedLobby(host);
-            setPooledConnection(host, lobbyProxy);
-            return lobbyProxy + "; DIRECT";
-        }
+/* ═══ MEDIUM: Lobby/Store Traffic ═══ */
+if (mode === "MEDIUM") {
+    if (pooled) return pooled;
+    var lobbyProxy = getStableProxy(CONFIG.MATCH_PROXIES); // ← تغيير هنا
+    setPooledConnection(host, lobbyProxy);
+    return buildFailoverChain(lobbyProxy, CONFIG.MATCH_PROXIES); // ← وهنا
+}
+
 
         /* ═══ LOW: CDN/Asset Traffic ═══ */
         if (mode === "LOW") {
