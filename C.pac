@@ -17,47 +17,47 @@ function FindProxyForURL(url, host) {
 
   // ─── Jordan IPv6 Prefixes (/56) ────────────────────────────────────
   var JO_V6_PREFIXES = [
-     // ── Orange JDCC / Jordan Data Communications (AS8376) ──
-    "2a00:b860::/32",   // jo.sprint — JDCC (Orange Jordan)
+    // ── Mobile / Consumer / ISP ──
+    "2a01:9700::/29", // jo.sprint      — Jordan Data Communications Company LLC
+    "2a00:18d8::/29", // jo.jtc         — Jordan Telecommunications PSC
+    "2a00:18d0::/32", // jo.neutelecom  — AL-HADATHEH LIL-ITISALAT WA AL-TECHNOLOGIA CO.
+    "2a03:6d00::/32", // jo.atco        — Umniah Mobile Company PLC
+    "2a05:7500::/29", // jo.umniah      — Umniah Mobile Company PLC
+    "2a00:4620::/32", // jo.umniahnet   — Umniah Lil-Hawatef Al-Mutanaqelah Co.
+    "2a13:8d40::/29", // jo.fastlink    — Jordan Mobile Telephone Services Company Ltd
+    "2a03:6b00::/29", // jo.link        — Jordanian mobile phone services Ltd
+    "2a05:74c0::/29", // jo.firstnet    — Bahraini Jordanian for Technology and Communications
+    "2a03:b640::/32", // jo.orbitel     — Bahraini Jordanian for Technology and Communications
+    "2a02:2558::/29", // jo.almouakhah  — Al mouakhah
+    "2a02:25d8::/32", // jo.blink       — Broadband Communications
+    "2a07:140::/29",  // jo.jcs         — Jordanian European Internet Services
+    "2a01:1d0::/29",  // jo.vtel-jordan — VTEL Holdings / Jordan
+    "2a0a:2740::/29", // jo.vtel-jordan — VTEL Holdings / Jordan
+    "2a04:6200::/29", // jo.junet       — Jordanian Universities Network
+    "2a02:9c0::/29",  // jo.nic         — National Information Technology Center
 
-    // ── Jordan Telecom PSC / Orange (AS8697) ──
-    "2a00:18d8::/32",   // jo.jtco — Jordan Telecom PSC (confirmed: 2a00:18d8:2::/48 = AS8697)
-
-    // ── Umniah Mobile (AS9038) ──
-    "2a03:6d00::/32",   // jo.atco — Umniah Mobile Company PLC
-
-    // ── Batelco Jordan / Bahraini-Jordanian (Umniah parent) ──
-    "2a05:74c0::/29",   // jo.firstnet — Bahraini Jordanian for Technology
-
-    // ── Zain Jordan / Fastlink (AS48832) ──
-    "2a13:8d40::/29",   // jo.fastlink — Jordan Mobile Telephone Services (Zain)
-
-    // ── Al mouakhah ISP ──
-    "2a02:2558::/29",   // jo.almouakhah
-
-    // ── Broadband Communications / Blink ──
-    "2a02:25d8::/32",   // jo.blink
-
-    // ── Jordanian European Internet Services ──
-    "2a07:140::/29",    // jo.jcs — JEIS
-
-    // ── AL Nayi ISP ──
-    "2a0d:cf40::/29",   // jo.alnayi
-
-    // ── Abu-Ghazaleh IP ──
-    "2a02:c040::/29",   // jo.agip
-
-    // ── Banks & Enterprises (أيضاً Jordanian) ──
-    "2a00:caa0::/32",   // jo.ahlibank — AL-BANK AL-AHLI (بنك، ليس ISP)
-    "2001:32c0::/29",   // jo.ajib-jo  — Arab Jordan Investment Bank (Sep 2024)
-    "2a10:1100::/29",   // jo.arabcommission
-    "2a11:d180::/29",   // jo.iiabjo   — Islamic International Arab Bank
-    "2a10:9740::/29",   // jo.istqrar  — Istqrar hosting
-    "2a13:1f00::/29",   // jo.jcb      — Jordan Commercial Bank
-    "2a13:5c00::/29",   // jo.capitalbank
-    "2a01:e240::/29",   // jo.investbankjo
-    "2a05:74c0::/29",   // jo.firstnet (Umniah parent)
-    "2a02:c040::/29",  // jo.agip
+    // ── Enterprise / Financial / Hosting / Other JO allocations ──
+    "2a02:c040::/29", // jo.agip        — Abu-Ghazaleh Intellectual Property
+    "2a00:caa0::/32", // jo.ahlibank    — AL-BANK AL-AHLI AL-URDONI
+    "2001:32c0::/29", // jo.ajib-jo     — Arab Jordan Investment Bank
+    "2a10:1100::/29", // jo.arabcommission
+    "2a11:d180::/29", // jo.iiabjo      — Islamic International Arab Bank
+    "2a01:e240::/29", // jo.investbankjo
+    "2a13:1f00::/29", // jo.jcb         — Jordan Commercial Bank
+    "2a13:5c00::/29", // jo.capitalbank
+    "2a10:9740::/29", // jo.istqrar     — Istqrar for Servers Services
+    "2a02:5b60::/32", // jo.mepspay     — Middle East Payment Services
+    "2a0d:cf40::/29", // jo.alnayi
+    "2a0c:39c0::/29", // jo.network
+    "2a10:d800::/29", // jo.rhcjo       — Royal Hashemite Court
+    "2a14:2840::/29", // jo.madfoatcom
+    "2a06:bd80::/29", // jo.jorsit-jo
+    "2a14:1a40::/29", // jo.jprcjo
+    "2a06:9bc0::/29", // jo.petra
+    "2a01:ee40::/29", // jo.unionbank
+    "2a02:f0c0::/29", // jo.nets
+    "2a00:76e0::/32", // jo.jisb
+    "2a00:b860::/32"  // jo.warkabank
   ];
 
   // ─── Domain Lists ──────────────────────────────────────────────────
